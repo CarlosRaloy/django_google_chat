@@ -33,4 +33,16 @@ urlpatterns = [
         name='send_message'
     ),
 
+    path(
+        route='start_oauth/',
+        view=views.start_oauth,
+        name='start_oauth'
+    ),
+
+    path(
+        route='oauth_callback/',
+        view=views.oauth_callback,
+        name='oauth_callback'
+    ),
+
 ]
