@@ -2,12 +2,16 @@ import os
 import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
-from .models import ModelGoogleGuest
+from datetime import datetime
+from .models import ModelGoogleGuest, RespondedMessage
 import googleapiclient.discovery
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
+from .utils import consulta_chatgpt
+from dotenv import load_dotenv
+load_dotenv()
 
 # Ruta del archivo JSON de credenciales OAuth
 CLIENT_SECRETS_FILE = os.path.join('credentials', 'client_secret_429186771757-rk0ptndo07neej85p0a171bssb66p8n0.apps.googleusercontent.com.json')
@@ -198,7 +202,7 @@ def load_credentials():
     return None
 
 def list_messages(request):
-    """Obtiene y muestra el último mensaje de un espacio específico."""
+    """Obtiene el último mensaje de cada espacio, llama a ChatGPT y responde automáticamente."""
     credentials = load_credentials()
 
     if not credentials:
@@ -214,31 +218,59 @@ def list_messages(request):
 
         for guest in guests:
             space_name = f"spaces/{guest.space.strip()}"
-            response = service.spaces().messages().list(
-                parent=space_name,
-                pageSize=10  # Limitar los resultados para eficiencia
-            ).execute()
+            all_messages = []
+            page_token = None
 
-            # Filtrar y obtener el último mensaje por fecha
-            messages = response.get('messages', [])
-            if messages:
-                # Ordenar los mensajes por 'createTime' (más reciente primero)
-                messages_sorted = sorted(messages, key=lambda x: x['createTime'], reverse=True)
-                last_message = messages_sorted[0]  # Obtener el mensaje más reciente
+            # Obtener todos los mensajes del espacio usando paginación
+            while True:
+                response = service.spaces().messages().list(
+                    parent=space_name,
+                    pageSize=1000,  # Máximo permitido
+                    pageToken=page_token
+                ).execute()
 
-                # Guardar solo la información relevante
+                messages = response.get('messages', [])
+                all_messages.extend(messages)
+
+                page_token = response.get('nextPageToken')
+                if not page_token:
+                    break
+
+            # Filtrar el mensaje más reciente por fecha
+            if all_messages:
+                messages_sorted = sorted(all_messages, key=lambda x: x['createTime'], reverse=True)
+                last_message = messages_sorted[0]
+
+                sender_id = last_message['sender']['name']
+                message_text = last_message.get('text', '')
+                created_time = last_message['createTime']
+
+                # Solo responder si el mensaje no es del bot
+                if sender_id != BOT_USER_ID and message_text:
+                    # Consultar ChatGPT
+                    print(f"Mensaje del usuario: {message_text}")
+                    response_text = consulta_chatgpt(f"Responde a este mensaje: {message_text}")
+                    print(f"Respuesta de ChatGPT: {response_text}")
+
+                    # Enviar respuesta al espacio
+                    service.spaces().messages().create(
+                        parent=space_name,
+                        body={"text": response_text}
+                    ).execute()
+
+                # Añadir a la lista de últimos mensajes
                 last_messages.append({
                     'space': space_name,
-                    'sender': last_message['sender']['name'],
-                    'text': last_message.get('text', 'Sin contenido'),
-                    'time': last_message['createTime']
+                    'sender': sender_id,
+                    'text': message_text,
+                    'time': created_time
                 })
 
         # Renderizar los últimos mensajes en el template
         return render(request, 'list_messages.html', {'messages_list': last_messages})
 
     except Exception as e:
-        print(f"Error al listar mensajes: {e}")
+        print(f"Error al listar y responder mensajes: {e}")
         return redirect('guests:feed')
 
 
