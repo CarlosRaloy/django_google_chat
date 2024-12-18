@@ -46,6 +46,7 @@
             <div class="col-12 d-flex justify-content-between align-items-center">
                 <h1>Gestión de Usuarios 📬</h1>
                 <div>
+                    <a href="{% url 'guests:list_messages' %}" class="btn btn-info btn-sm">Ver Mensajes Recientes 📥</a>
                     <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">Agregar Usuario ➕</button>
                     <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#sendMessageModal">Enviar Mensaje 📩</button>
                 </div>

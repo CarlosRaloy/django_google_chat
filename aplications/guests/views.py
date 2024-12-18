@@ -6,15 +6,19 @@ from .models import ModelGoogleGuest
 import googleapiclient.discovery
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
+from googleapiclient.discovery import build
+from google.auth.transport.requests import Request
 
 # Ruta del archivo JSON de credenciales OAuth
 CLIENT_SECRETS_FILE = os.path.join('credentials', 'client_secret_429186771757-rk0ptndo07neej85p0a171bssb66p8n0.apps.googleusercontent.com.json')
 CREDENTIALS_FILE = os.path.join('credentials', 'user_credentials.json')
+BOT_USER_ID = "users/112568225339349392647"
 
 # Definir los permisos necesarios
 SCOPES = [
     'https://www.googleapis.com/auth/chat.spaces',
     'https://www.googleapis.com/auth/chat.messages',
+    'https://www.googleapis.com/auth/chat.messages.readonly',
 ]
 
 # Permitir transporte inseguro (desarrollo local)
@@ -91,6 +95,9 @@ def oauth_callback(request):
     flow.fetch_token(authorization_response=request.build_absolute_uri())
     credentials = flow.credentials
 
+    # Imprimir credenciales para debug
+    print(f"Credenciales obtenidas: {credentials.to_json()}")
+
     # Guardar las credenciales en el archivo user_credentials.json
     with open(CREDENTIALS_FILE, 'w') as cred_file:
         json.dump({
@@ -155,3 +162,83 @@ def send_message(request):
         return redirect('guests:feed')
 
     return redirect('guests:feed')
+
+
+
+
+def load_credentials():
+    if os.path.exists(CREDENTIALS_FILE):
+        with open(CREDENTIALS_FILE, 'r') as file:
+            creds_data = json.load(file)
+        try:
+            credentials = Credentials.from_authorized_user_info(creds_data, SCOPES)
+
+            # Si las credenciales están expiradas, refrescarlas
+            if credentials.expired and credentials.refresh_token:
+                credentials.refresh(Request())
+                print("Token refrescado exitosamente")
+
+                # Guardar las credenciales actualizadas
+                with open(CREDENTIALS_FILE, 'w') as file:
+                    json.dump({
+                        'token': credentials.token,
+                        'refresh_token': credentials.refresh_token,
+                        'token_uri': credentials.token_uri,
+                        'client_id': credentials.client_id,
+                        'client_secret': credentials.client_secret,
+                        'scopes': credentials.scopes,
+                    }, file)
+
+            return credentials
+
+        except Exception as e:
+            print(f"Error al cargar o refrescar credenciales: {e}")
+            return None
+
+    return None
+
+def list_messages(request):
+    """Obtiene y muestra el último mensaje de un espacio específico."""
+    credentials = load_credentials()
+
+    if not credentials:
+        return redirect('guests:start_oauth')
+
+    try:
+        # Inicializar el servicio de Google Chat
+        service = build('chat', 'v1', credentials=credentials)
+        guests = ModelGoogleGuest.objects.all()  # Todos los espacios registrados
+
+        # Lista para almacenar los últimos mensajes por espacio
+        last_messages = []
+
+        for guest in guests:
+            space_name = f"spaces/{guest.space.strip()}"
+            response = service.spaces().messages().list(
+                parent=space_name,
+                pageSize=10  # Limitar los resultados para eficiencia
+            ).execute()
+
+            # Filtrar y obtener el último mensaje por fecha
+            messages = response.get('messages', [])
+            if messages:
+                # Ordenar los mensajes por 'createTime' (más reciente primero)
+                messages_sorted = sorted(messages, key=lambda x: x['createTime'], reverse=True)
+                last_message = messages_sorted[0]  # Obtener el mensaje más reciente
+
+                # Guardar solo la información relevante
+                last_messages.append({
+                    'space': space_name,
+                    'sender': last_message['sender']['name'],
+                    'text': last_message.get('text', 'Sin contenido'),
+                    'time': last_message['createTime']
+                })
+
+        # Renderizar los últimos mensajes en el template
+        return render(request, 'list_messages.html', {'messages_list': last_messages})
+
+    except Exception as e:
+        print(f"Error al listar mensajes: {e}")
+        return redirect('guests:feed')
+
+

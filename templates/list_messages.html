@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mensajes Recientes</title>
+</head>
+<body>
+    <h1>Mensajes Recientes 📥</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Espacio</th>
+                <th>Remitente</th>
+                <th>Mensaje</th>
+                <th>Fecha</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for message in messages_list %}
+            <tr>
+                <td>{{ message.space }}</td>
+                <td>{{ message.sender }}</td>
+                <td>{{ message.text }}</td>
+                <td>{{ message.time }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center">No hay mensajes disponibles.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'guests:feed' %}" class="btn btn-secondary">Volver</a>
+</body>
+</html>

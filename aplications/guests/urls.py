@@ -45,4 +45,10 @@ urlpatterns = [
         name='oauth_callback'
     ),
 
+    path(
+        route='list_messages/',
+        view=views.list_messages,
+        name='list_messages'
+    ),
+
 ]
