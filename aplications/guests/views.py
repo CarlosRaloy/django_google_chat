@@ -49,7 +49,25 @@ def add_user(request):
         name = request.POST.get("name")
         space = request.POST.get("space")
         if name and space:
-            ModelGoogleGuest.objects.create(name=name, space=space)
+            # Crear el nuevo usuario
+            new_user = ModelGoogleGuest.objects.create(name=name, space=space)
+
+            # Enviar mensaje de bienvenida personalizado
+            credentials = load_credentials()
+            if credentials:
+                try:
+                    # Configurar el servicio de Google Chat
+                    service = build('chat', 'v1', credentials=credentials)
+                    space_id = new_user.space
+                    welcome_message = f"Hola {new_user.name}, seré tu asistente personal 🙂\nque es lo que quieres hacer hoy"
+                    service.spaces().messages().create(
+                        parent=f'spaces/{space_id}',
+                        body={"text": welcome_message}
+                    ).execute()
+                    print(f"Mensaje enviado al espacio {space_id}.")
+                except Exception as e:
+                    print(f"Error al enviar mensaje de bienvenida: {e}")
+
         return redirect('guests:feed')
 
 
