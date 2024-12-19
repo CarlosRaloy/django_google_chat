@@ -202,7 +202,10 @@ def load_credentials():
     return None
 
 def list_messages(request):
-    """Obtiene el último mensaje de cada espacio, llama a ChatGPT y responde automáticamente."""
+    """
+    Obtiene los últimos mensajes de Google Chat por espacio y los muestra en el template.
+    Excluye los mensajes enviados por el bot (BOT_USER_ID).
+    """
     credentials = load_credentials()
 
     if not credentials:
@@ -236,41 +239,32 @@ def list_messages(request):
                 if not page_token:
                     break
 
-            # Filtrar el mensaje más reciente por fecha
+            # Filtrar el mensaje más reciente que no sea del bot
             if all_messages:
                 messages_sorted = sorted(all_messages, key=lambda x: x['createTime'], reverse=True)
-                last_message = messages_sorted[0]
 
-                sender_id = last_message['sender']['name']
-                message_text = last_message.get('text', '')
-                created_time = last_message['createTime']
+                # Buscar el mensaje más reciente que NO sea del bot
+                for message in messages_sorted:
+                    sender_id = message['sender']['name']
+                    message_text = message.get('text', '')
+                    created_time = message['createTime']
 
-                # Solo responder si el mensaje no es del bot
-                if sender_id != BOT_USER_ID and message_text:
-                    # Consultar ChatGPT
-                    print(f"Mensaje del usuario: {message_text}")
-                    response_text = consulta_chatgpt(f"Responde a este mensaje: {message_text}")
-                    print(f"Respuesta de ChatGPT: {response_text}")
-
-                    # Enviar respuesta al espacio
-                    service.spaces().messages().create(
-                        parent=space_name,
-                        body={"text": response_text}
-                    ).execute()
-
-                # Añadir a la lista de últimos mensajes
-                last_messages.append({
-                    'space': space_name,
-                    'sender': sender_id,
-                    'text': message_text,
-                    'time': created_time
-                })
+                    if sender_id != BOT_USER_ID and message_text:
+                        last_messages.append({
+                            'space': space_name,
+                            'sender': sender_id,
+                            'text': message_text,
+                            'time': created_time
+                        })
+                        break  # Solo añadimos el mensaje más reciente
 
         # Renderizar los últimos mensajes en el template
         return render(request, 'list_messages.html', {'messages_list': last_messages})
 
     except Exception as e:
-        print(f"Error al listar y responder mensajes: {e}")
+        print(f"Error al listar mensajes: {e}")
         return redirect('guests:feed')
+
+
 
 

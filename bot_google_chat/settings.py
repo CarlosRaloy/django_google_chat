@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'aplications.guests',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -66,6 +67,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'bot_google_chat.wsgi.application'
+
+# Configuración para los canales (en desarrollo local)
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"  # Usa una capa en memoria para desarrollo local
+    },
+}
 
 
 # Database

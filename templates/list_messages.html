@@ -1,14 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mensajes Recientes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Mensajes Recientes 📥</h1>
-    <table class="table">
+<div class="container mt-4">
+    <h1 class="text-center">
+        <i class="fas fa-envelope"></i> Mensajes Recientes
+    </h1>
+    <table class="table table-striped mt-4">
         <thead>
             <tr>
+                <th>#</th>
                 <th>Espacio</th>
                 <th>Remitente</th>
                 <th>Mensaje</th>
@@ -16,20 +22,22 @@
             </tr>
         </thead>
         <tbody>
-            {% for message in messages_list %}
+            {% for msg in messages_list %}
             <tr>
-                <td>{{ message.space }}</td>
-                <td>{{ message.sender }}</td>
-                <td>{{ message.text }}</td>
-                <td>{{ message.time }}</td>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ msg.space }}</td>
+                <td>{{ msg.sender }}</td>
+                <td>{{ msg.text }}</td>
+                <td>{{ msg.time }}</td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4" class="text-center">No hay mensajes disponibles.</td>
+                <td colspan="5" class="text-center">No hay mensajes disponibles.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
     <a href="{% url 'guests:feed' %}" class="btn btn-secondary">Volver</a>
+</div>
 </body>
 </html>
