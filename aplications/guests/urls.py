@@ -34,7 +34,7 @@ urlpatterns = [
     ),
 
     path(
-        route='send_message/<int:user_id>/',
+        route='send_individual_message/',
         view=views.send_individual_message,
         name='send_individual_message'
     ),

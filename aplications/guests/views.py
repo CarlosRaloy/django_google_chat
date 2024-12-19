@@ -187,38 +187,45 @@ def send_message(request):
     return redirect('guests:feed')
 
 
-def send_individual_message(request, user_id):
+def send_individual_message(request):
     """
     Envía un mensaje a un usuario específico basado en su espacio.
     """
     if request.method == "POST":
         message = request.POST.get("message")
-        user = get_object_or_404(ModelGoogleGuest, id=user_id)
+        space = request.POST.get("space")
 
-        if not message:
-            return JsonResponse({'success': False, 'error': 'El mensaje no puede estar vacío.'})
+        if not message or not space:
+            request.session['error_message'] = "El mensaje o espacio no pueden estar vacíos."
+            return redirect('guests:feed')
 
         credentials = load_credentials()
         if not credentials:
-            return JsonResponse({'success': False, 'error': 'No se pudieron cargar las credenciales.'})
+            request.session['error_message'] = "No se pudieron cargar las credenciales. Intenta reautorizar."
+            return redirect('guests:feed')
 
         try:
             # Inicializar el servicio de Google Chat
             service = build('chat', 'v1', credentials=credentials)
 
-            # Enviar mensaje al espacio del usuario
+            # Enviar mensaje al espacio especificado
             service.spaces().messages().create(
-                parent=f"spaces/{user.space}",
+                parent=f"spaces/{space}",
                 body={"text": message}
             ).execute()
 
-            return JsonResponse({'success': True, 'message': f"Mensaje enviado a {user.name}."})
+            # Mensaje de éxito
+            request.session['success_message'] = f"Mensaje enviado al espacio {space}."
+            return redirect('guests:feed')
 
         except Exception as e:
-            print(f"Error al enviar mensaje a {user.name}: {e}")
-            return JsonResponse({'success': False, 'error': f"Error al enviar mensaje: {str(e)}"})
+            print(f"Error al enviar mensaje al espacio {space}: {e}")
+            request.session['error_message'] = f"Error al enviar mensaje: {str(e)}"
+            return redirect('guests:feed')
 
-    return JsonResponse({'success': False, 'error': 'Método no permitido.'})
+    request.session['error_message'] = "Método no permitido."
+    return redirect('guests:feed')
+
 
 
 

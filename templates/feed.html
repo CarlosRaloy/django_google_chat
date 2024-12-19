@@ -48,7 +48,8 @@
                 <div>
                     <a href="{% url 'guests:list_messages' %}" class="btn btn-info btn-sm">Ver Mensajes Recientes 📥</a>
                     <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">Agregar Usuario ➕</button>
-                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#sendMessageModal">Enviar Mensaje 📩</button>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#sendMessageModal">Masivo 📩</button>
+                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#sendGlobalMessageModal">Individual ✉️</button>
                 </div>
             </div>
         </div>
@@ -162,25 +163,33 @@
             </div>
         </div>
 
-        <!-- Modal para enviar mensaje individual -->
-        <div class="modal fade" id="sendIndividualMessageModal{{ user.id }}" tabindex="-1" aria-labelledby="sendIndividualMessageModalLabel{{ user.id }}" aria-hidden="true">
+        <!-- Modal Global para enviar mensajes -->
+        <div class="modal fade" id="sendGlobalMessageModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <form method="POST" action="{% url 'guests:send_individual_message' user.id %}">
+                    <form method="POST" action="{% url 'guests:send_individual_message' %}">
                         {% csrf_token %}
                         <div class="modal-header">
-                            <h5 class="modal-title">Enviar Mensaje a {{ user.name }}</h5>
+                            <h5 class="modal-title">Enviar Mensaje</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <div class="mb-3">
-                                <label for="message{{ user.id }}" class="form-label">Mensaje</label>
-                                <textarea class="form-control" id="message{{ user.id }}" name="message" rows="3" placeholder="Escribe tu mensaje aquí..." required></textarea>
+                                <label for="space" class="form-label">Selecciona el Espacio</label>
+                                <select id="space" name="space" class="form-select" required>
+                                    {% for user in users %}
+                                    <option value="{{ user.space }}">{{ user.name }} ({{ user.space }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="message" class="form-label">Mensaje</label>
+                                <textarea id="message" name="message" class="form-control" rows="3" required></textarea>
                             </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-success">Enviar</button>
+                            <button type="submit" class="btn btn-primary">Enviar</button>
                         </div>
                     </form>
                 </div>
@@ -212,5 +221,18 @@
             </div>
         </div>
     </div>
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#space').select2({
+        width: '100%',
+        placeholder: "Selecciona un espacio",
+        allowClear: true
+    });
+});
+</script>
+
 </body>
 </html>
