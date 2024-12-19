@@ -34,6 +34,12 @@ urlpatterns = [
     ),
 
     path(
+        route='send_message/<int:user_id>/',
+        view=views.send_individual_message,
+        name='send_individual_message'
+    ),
+
+    path(
         route='start_oauth/',
         view=views.start_oauth,
         name='start_oauth'

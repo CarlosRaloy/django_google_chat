@@ -1,5 +1,6 @@
 import os
 import json
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from datetime import datetime
@@ -185,6 +186,39 @@ def send_message(request):
 
     return redirect('guests:feed')
 
+
+def send_individual_message(request, user_id):
+    """
+    Envía un mensaje a un usuario específico basado en su espacio.
+    """
+    if request.method == "POST":
+        message = request.POST.get("message")
+        user = get_object_or_404(ModelGoogleGuest, id=user_id)
+
+        if not message:
+            return JsonResponse({'success': False, 'error': 'El mensaje no puede estar vacío.'})
+
+        credentials = load_credentials()
+        if not credentials:
+            return JsonResponse({'success': False, 'error': 'No se pudieron cargar las credenciales.'})
+
+        try:
+            # Inicializar el servicio de Google Chat
+            service = build('chat', 'v1', credentials=credentials)
+
+            # Enviar mensaje al espacio del usuario
+            service.spaces().messages().create(
+                parent=f"spaces/{user.space}",
+                body={"text": message}
+            ).execute()
+
+            return JsonResponse({'success': True, 'message': f"Mensaje enviado a {user.name}."})
+
+        except Exception as e:
+            print(f"Error al enviar mensaje a {user.name}: {e}")
+            return JsonResponse({'success': False, 'error': f"Error al enviar mensaje: {str(e)}"})
+
+    return JsonResponse({'success': False, 'error': 'Método no permitido.'})
 
 
 

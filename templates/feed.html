@@ -162,6 +162,31 @@
             </div>
         </div>
 
+        <!-- Modal para enviar mensaje individual -->
+        <div class="modal fade" id="sendIndividualMessageModal{{ user.id }}" tabindex="-1" aria-labelledby="sendIndividualMessageModalLabel{{ user.id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="POST" action="{% url 'guests:send_individual_message' user.id %}">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                            <h5 class="modal-title">Enviar Mensaje a {{ user.name }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="message{{ user.id }}" class="form-label">Mensaje</label>
+                                <textarea class="form-control" id="message{{ user.id }}" name="message" rows="3" placeholder="Escribe tu mensaje aquí..." required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success">Enviar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- Modal para enviar mensaje -->
         <div class="modal fade" id="sendMessageModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
