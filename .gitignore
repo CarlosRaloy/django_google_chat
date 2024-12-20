@@ -108,7 +108,7 @@ venv.bak/
 
 # mkdocs documentation
 /site
-
+aplications/guests/migrations/
 # mypy
 .mypy_cache/
 
