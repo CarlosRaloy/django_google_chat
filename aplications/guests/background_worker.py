@@ -91,11 +91,12 @@ def background_worker():
                     message_text = last_message['text']
                     created_time = last_message['createTime']
 
-                    print(f"[DEBUG] Último mensaje del usuario detectado en espacio {space_name}:")
-                    print(f"  - ID Mensaje: {message_id}")
-                    print(f"  - Remitente: {sender_id}")
-                    print(f"  - Texto: {message_text}")
-                    print(f"  - Fecha de creación: {created_time}")
+                    # Degug de los mensajes (Descomentar para ver el comportamiento)
+                    #print(f"[DEBUG 🪲] Último mensaje del usuario detectado en espacio {space_name}:")
+                    #print(f"[DEBUG 🪲] - ID Mensaje: {message_id}")
+                    #print(f"[DEBUG 🪲] - Remitente: {sender_id}")
+                    #print(f"[DEBUG 🪲] - Texto: {message_text}")
+                    #print(f"[DEBUG 🪲] - Fecha de creación: {created_time}")
 
                     # Verificar si ya se respondió el mensaje
                     if not RespondedMessage.objects.filter(message_id=message_id).exists():
@@ -118,9 +119,10 @@ def background_worker():
                             status=True
                         )
                     else:
-                        print(f"[DEBUG] El mensaje ya fue respondido: {message_id}")
+                        pass
+                        #print(f"[DEBUG 🐞] El mensaje ya fue respondido: {message_id}")
 
-            print("Revisando mensajes nuevamente...")
+            #print("[DEBUG 🐞] Revisando mensajes nuevamente...")
             time.sleep(10)
 
         except Exception as e:
